@@ -26,7 +26,7 @@ icc-eval-core-templates/
 ├── templates/
 │   ├── assets/
 │   ├── reports/
-│   ├── etc/
+│   ├── misc/
 │   └── .../
 │
 ├── examples/

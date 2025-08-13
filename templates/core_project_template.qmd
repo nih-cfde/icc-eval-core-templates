@@ -1,0 +1,134 @@
+---
+title-block: false
+format:
+  html:
+    toc: true
+    toc-location: left-body
+    grid: 
+      body-width: 2000px
+    embed-resources: true
+params:
+  core_project: "OT2OD030545"
+---
+
+# Core Project {{< meta params.core_project >}}
+
+
+```{r}
+#| label: setup
+#| echo: false
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(magrittr))
+suppressPackageStartupMessages(library(programets))
+suppressPackageStartupMessages(library(DT))
+
+# Positron IDE fix
+if(interactive()) {params <- list(core_project = "OT2OD030545")}
+
+# Load Project Info
+proj_info <- get_core_project_info(c(params$core_project, "99999999")) %>% 
+    filter(core_project_num != '99999999')
+icite_info <- programets::icite(proj_info$pmid)
+proj_info %<>% 
+    left_join(icite_info, by = c('pmid' = '_id'))
+git_info <- get_github_by_topic(params$core_project, limit = 150)
+```
+
+## Details
+
+```{r}
+#| label: details
+#| echo: false
+projects <- proj_info %>% distinct(project_num)
+name <- proj_info %>% distinct(project_title)
+total_direct_cost <- proj_info %>% distinct(direct_cost_amt, project_num) %>% pull(direct_cost_amt) %>% sum(na.rm = TRUE)
+total_indirect_cost <- proj_info %>% distinct(indirect_cost_amt, project_num) %>% pull(indirect_cost_amt) %>% sum(na.rm = TRUE)
+award <- total_direct_cost + total_indirect_cost
+publications <- proj_info %>% filter(!is.na(pmid)) %>% distinct(pmid) %>% count()
+repos <- git_info %>% count()
+open_issues <- git_info %>% pull(open_issues) %>% sum(na.rm = TRUE)
+open_prs <- git_info %>% pull(open_prs) %>% sum(na.rm = TRUE)
+stars <- git_info %>% pull(stars) %>% sum(na.rm = TRUE)
+watchers <- git_info %>% pull(watchers) %>% sum(na.rm = TRUE)
+forks <- git_info %>% pull(forks) %>% sum(na.rm = TRUE)
+```
+
+
+```{r}
+#| echo: false
+dt_projects <- datatable(
+  data.frame(Projects = projects$project_num),
+  options = list(dom = 't', paging = FALSE, ordering = FALSE),
+  rownames = FALSE
+)
+dt_publications <- datatable(
+  publications %>% rename('Qty Publications' = n),
+  options = list(dom = 't', paging = FALSE, ordering = FALSE),
+  rownames = FALSE
+)
+dt_name_award <- datatable(
+  data.frame(
+    Name = name %>% rename('Name' = project_title),
+    Award = award
+  ),
+  options = list(dom = 't', paging = FALSE, ordering = FALSE),
+  rownames = FALSE
+  ) %>% 
+    formatCurrency(
+    columns = "Award",
+    currency = "$",
+    interval = 3,
+    mark = ",",
+    digits = 2
+  )
+dt_repos <- datatable(
+  repos %>% rename('Qty Repositories' = n),
+  options = list(dom = 't', paging = FALSE, ordering = FALSE),
+  rownames = FALSE
+)
+htmltools::browsable(
+  htmltools::tagList(
+    htmltools::tags$div(
+      style = "display: flex; gap: 40px;",
+      htmltools::tags$div(dt_projects),
+      htmltools::tags$div(dt_name_award)
+    ),
+    htmltools::tags$div(
+      style = "display: flex; gap: 40px; margin-top: 20px;",
+      htmltools::tags$div(dt_publications),
+      htmltools::tags$div(dt_repos)
+    )
+  )
+)
+```
+
+## Publications
+
+```{r}
+#| label: publications
+#| echo: false
+
+proj_info %>% 
+    filter(found_publication == TRUE) %>% 
+    mutate(
+        Authors = map_chr(authors, ~ str_c(.x$lastName, collapse = ", ")),
+        RCR = round(relative_citation_ratio, 2)
+    ) %>% 
+    select(ID = pmid, Title = title, Authors, RCR, Citations = citation_count, 'Citations/Year' = citations_per_year, Published = year, Updated = date_added) %>% 
+    datatable(extensions = 'Buttons', options = list(
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel')
+    ))
+```
+
+## Repositories
+
+```{r}
+#| label: repos
+#| echo: false
+git_info %>% 
+    datatable(extensions = 'Buttons', options = list(
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel')
+    ))
+```

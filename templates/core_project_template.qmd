@@ -144,14 +144,23 @@ htmltools::browsable(
 proj_info %>% 
     filter(found_publication == TRUE) %>% 
     mutate(
+        pubmed_url = glue::glue("<a href='https://pubmed.ncbi.nlm.nih.gov/38605048{pmid}' target='_blank'>{pmid}</a>"),
+        doi_url = glue::glue("<a href='https://doi.org/{doi}' target='_blank'>DOI</a>"),
+        ID = glue::glue("{pubmed_url}\n{doi_url}"),
         Authors = map_chr(authors, ~ str_c(.x$lastName, collapse = ", ")),
         RCR = round(relative_citation_ratio, 2)
     ) %>% 
-    select(ID = pmid, Title = title, Authors, RCR, Citations = citation_count, 'Citations/Year' = citations_per_year, Published = year, Updated = date_added) %>% 
-    datatable(extensions = 'Buttons', options = list(
+    mutate(across(where(is.numeric), ~ replace_na(.x, 0))) %>% 
+    select(ID, Title = title, Authors, RCR, Citations = citation_count, 'Citations/Year' = citations_per_year, Journal = journal, Published = year, Updated = date_added) %>% 
+    datatable(
+      extensions = 'Buttons', 
+      options = list(
         dom = 'Bfrtip',
         buttons = c('csv', 'excel')
-    ))
+      ),
+      rownames = FALSE,
+      escape = FALSE
+    )
 ```
 
 ## Repositories
@@ -160,8 +169,13 @@ proj_info %>%
 #| label: repos
 #| echo: false
 git_info %>% 
-    datatable(extensions = 'Buttons', options = list(
+    datatable(
+      extensions = 'Buttons', 
+      options = list(
         dom = 'Bfrtip',
         buttons = c('csv', 'excel')
-    ))
+      ),
+      rownames = FALSE,
+      escape = FALSE
+    )
 ```

@@ -2,10 +2,12 @@
 title-block: false
 format:
   html:
+    smooth-scroll: true
+    theme: materia
+    page-layout: full
+    fontsize: 0.8em
     toc: true
     toc-location: body
-    grid: 
-      body-width: 2000px
     embed-resources: true
 params:
   core_project: "OT2OD030545"
@@ -156,7 +158,9 @@ proj_info %>%
     extensions = 'Buttons', 
     options = list(
       dom = 'Bfrtip',
-      buttons = c('csv', 'excel')
+      buttons = c('csv', 'excel'),
+      scrollY = 500,
+      scroller = TRUE
     ),
     rownames = FALSE,
     escape = FALSE
@@ -188,7 +192,9 @@ git_info %>%
     extensions = 'Buttons', 
     options = list(
       dom = 'Bfrtip',
-      buttons = c('csv', 'excel')
+      buttons = c('csv', 'excel'),
+      scrollY = 500,
+      scroller = TRUE
     ),
     rownames = FALSE,
     escape = FALSE

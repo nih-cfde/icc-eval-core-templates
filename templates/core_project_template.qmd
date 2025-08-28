@@ -104,15 +104,15 @@ dt_name_award <- datatable(
 ## Repositories
 dt_repos <- datatable(
   repos %>% 
-    mutate(n = glue::glue("{n} repositories")) %>% 
+    mutate(n = glue::glue("{format(n, big.mark = ',')} repositories")) %>% 
     rename('Repositories' = n) %>% 
-    add_row(Repositories = glue::glue("{stars} stars")) %>% 
-    add_row(Repositories = glue::glue("{watchers} watchers")) %>% 
-    add_row(Repositories = glue::glue("{forks} forks")) %>% 
-    add_row(Repositories = glue::glue("{sum(open_issues, closed_issues)} issues")) %>% 
-    add_row(Repositories = glue::glue("{sum(open_prs, closed_prs)} pull requests")) %>% 
-    add_row(Repositories = glue::glue("{commits} commits")) %>% 
-    add_row(Repositories = glue::glue("{contributors} contributors")),
+    add_row(Repositories = glue::glue("{format(stars, big.mark = ',')} stars")) %>% 
+    add_row(Repositories = glue::glue("{format(watchers, big.mark = ',')} watchers")) %>% 
+    add_row(Repositories = glue::glue("{format(forks, big.mark = ',')} forks")) %>% 
+    add_row(Repositories = glue::glue("{format(sum(open_issues, closed_issues), big.mark = ',')} issues")) %>% 
+    add_row(Repositories = glue::glue("{format(sum(open_prs, closed_prs), big.mark = ',')} pull requests")) %>% 
+    add_row(Repositories = glue::glue("{format(commits, big.mark = ',')} commits")) %>% 
+    add_row(Repositories = glue::glue("{format(contributors, big.mark = ',')} contributors")),
   options = list(dom = 't', paging = FALSE, ordering = FALSE),
   rownames = FALSE
   ) 

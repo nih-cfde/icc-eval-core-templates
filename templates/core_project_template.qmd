@@ -3,16 +3,14 @@ title-block: false
 format:
   html:
     toc: true
-    toc-location: left-body
+    toc-location: body
     grid: 
       body-width: 2000px
     embed-resources: true
 params:
   core_project: "OT2OD030545"
+title: "Core Project {{< meta params.core_project >}}"
 ---
-
-# Core Project {{< meta params.core_project >}}
-
 
 ```{r}
 #| label: setup
@@ -31,7 +29,7 @@ proj_info <- get_core_project_info(c(params$core_project, "99999999")) %>%
 icite_info <- programets::icite(proj_info$pmid)
 proj_info %<>% 
     left_join(icite_info, by = c('pmid' = '_id'))
-git_info <- get_github_by_topic(params$core_project, limit = 150)
+git_info <- get_github_by_topic(topics = params$core_project, token = gitcreds::gitcreds_get()$password, limit = 150)
 ```
 
 ## Details
@@ -47,56 +45,91 @@ award <- total_direct_cost + total_indirect_cost
 publications <- proj_info %>% filter(!is.na(pmid)) %>% distinct(pmid) %>% count()
 repos <- git_info %>% count()
 open_issues <- git_info %>% pull(open_issues) %>% sum(na.rm = TRUE)
+closed_issues <- git_info %>% pull(closed_issues) %>% sum(na.rm = TRUE)
 open_prs <- git_info %>% pull(open_prs) %>% sum(na.rm = TRUE)
+closed_prs <- git_info %>% pull(closed_prs) %>% sum(na.rm = TRUE)
 stars <- git_info %>% pull(stars) %>% sum(na.rm = TRUE)
 watchers <- git_info %>% pull(watchers) %>% sum(na.rm = TRUE)
 forks <- git_info %>% pull(forks) %>% sum(na.rm = TRUE)
+commits <- git_info %>% pull(commits) %>% sum(na.rm = TRUE)
+contributors <- git_info %>% pull(contributors) %>% sum(na.rm = TRUE)
 ```
 
 
 ```{r}
+#| label: details-display
 #| echo: false
+
+## Projects
 dt_projects <- datatable(
-  data.frame(Projects = projects$project_num),
+  projects %>% 
+    rename(Projects = project_num),
   options = list(dom = 't', paging = FALSE, ordering = FALSE),
   rownames = FALSE
 )
+
+## Name
+dt_name <- datatable(
+  name %>% 
+    rename(Name = project_title),
+  options = list(dom = 't', paging = FALSE, ordering = FALSE),
+  rownames = FALSE
+)
+
+## Publications
 dt_publications <- datatable(
-  publications %>% rename('Qty Publications' = n),
+  publications %>% 
+    mutate(n = glue::glue("{n} publications")) %>% 
+    rename('Publications' = n),
   options = list(dom = 't', paging = FALSE, ordering = FALSE),
   rownames = FALSE
 )
+
+## Award
 dt_name_award <- datatable(
-  data.frame(
-    Name = name %>% rename('Name' = project_title),
+  tibble::tibble(
     Award = award
-  ),
+    ),
   options = list(dom = 't', paging = FALSE, ordering = FALSE),
   rownames = FALSE
   ) %>% 
-    formatCurrency(
+  formatCurrency(
     columns = "Award",
     currency = "$",
     interval = 3,
     mark = ",",
     digits = 2
   )
+
+## Repositories
 dt_repos <- datatable(
-  repos %>% rename('Qty Repositories' = n),
+  repos %>% 
+    mutate(n = glue::glue("{n} repositories")) %>% 
+    rename('Repositories' = n) %>% 
+    add_row(Repositories = glue::glue("{stars} stars")) %>% 
+    add_row(Repositories = glue::glue("{watchers} watchers")) %>% 
+    add_row(Repositories = glue::glue("{forks} forks")) %>% 
+    add_row(Repositories = glue::glue("{sum(open_issues, closed_issues)} issues")) %>% 
+    add_row(Repositories = glue::glue("{sum(open_prs, closed_prs)} pull requests")) %>% 
+    add_row(Repositories = glue::glue("{commits} commits")) %>% 
+    add_row(Repositories = glue::glue("{contributors} contributors")),
   options = list(dom = 't', paging = FALSE, ordering = FALSE),
   rownames = FALSE
-)
+  ) 
+
+## Arrange in Report
 htmltools::browsable(
   htmltools::tagList(
     htmltools::tags$div(
-      style = "display: flex; gap: 40px;",
-      htmltools::tags$div(dt_projects),
-      htmltools::tags$div(dt_name_award)
+      style = "display: flex; gap: 20px;",
+      htmltools::tags$div(style = "width: 25%;", dt_projects),
+      htmltools::tags$div(style = "width: 25%;", dt_name),
+      htmltools::tags$div(style = "width: 25%;", dt_name_award)
     ),
     htmltools::tags$div(
-      style = "display: flex; gap: 40px; margin-top: 20px;",
-      htmltools::tags$div(dt_publications),
-      htmltools::tags$div(dt_repos)
+      style = "display: flex; gap: 20px; margin-top: 20px;",
+      htmltools::tags$div(style = "width: 25%;", dt_publications),
+      htmltools::tags$div(style = "width: 25%;", dt_repos)
     )
   )
 )
@@ -117,7 +150,7 @@ proj_info %>%
     select(ID = pmid, Title = title, Authors, RCR, Citations = citation_count, 'Citations/Year' = citations_per_year, Published = year, Updated = date_added) %>% 
     datatable(extensions = 'Buttons', options = list(
         dom = 'Bfrtip',
-        buttons = c('copy', 'csv', 'excel')
+        buttons = c('csv', 'excel')
     ))
 ```
 
@@ -129,6 +162,6 @@ proj_info %>%
 git_info %>% 
     datatable(extensions = 'Buttons', options = list(
         dom = 'Bfrtip',
-        buttons = c('copy', 'csv', 'excel')
+        buttons = c('csv', 'excel')
     ))
 ```

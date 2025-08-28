@@ -146,7 +146,7 @@ htmltools::browsable(
 proj_info %>% 
   filter(found_publication == TRUE) %>% 
   mutate(
-      pubmed_url = glue::glue("<a href='https://pubmed.ncbi.nlm.nih.gov/38605048{pmid}' target='_blank'>{pmid}</a>"),
+      pubmed_url = glue::glue("<a href='https://pubmed.ncbi.nlm.nih.gov/{pmid}' target='_blank'>{pmid}</a>"),
       doi_url = glue::glue("<a href='https://doi.org/{doi}' target='_blank'>DOI</a>"),
       ID = glue::glue("{pubmed_url}<br>{doi_url}"),
       Authors = map_chr(authors, ~ str_c(.x$lastName, collapse = ", ")),

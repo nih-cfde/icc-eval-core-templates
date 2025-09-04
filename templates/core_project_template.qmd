@@ -21,6 +21,8 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(programets))
 suppressPackageStartupMessages(library(DT))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(plotly))
 
 # Positron IDE fix
 if(interactive()) {params <- list(core_project = "OT2OD030545")}
@@ -31,7 +33,7 @@ proj_info <- get_core_project_info(c(params$core_project, "99999999")) %>%
 icite_info <- programets::icite(proj_info$pmid)
 proj_info %<>% 
     left_join(icite_info, by = c('pmid' = '_id'))
-git_info <- get_github_by_topic(topics = params$core_project, token = gitcreds::gitcreds_get()$password, limit = 150)
+git_info <- get_github_by_topic_graphql(topics = c(params$core_project), token = gitcreds::gitcreds_get()$password)
 ```
 
 ## Details
@@ -139,6 +141,8 @@ htmltools::browsable(
 
 ## Publications
 
+Published works associated with this project.
+
 ```{r}
 #| label: publications
 #| echo: false
@@ -158,7 +162,7 @@ proj_info %>%
     extensions = 'Buttons', 
     options = list(
       dom = 'Bfrtip',
-      buttons = c('csv', 'excel'),
+      buttons = c('excel', 'csv'),
       scrollY = 500,
       scroller = TRUE
     ),
@@ -167,7 +171,30 @@ proj_info %>%
   )
 ```
 
+```{r}
+#| label: publications-plotly
+#| echo: false
+publication_data <-
+  proj_info %>% 
+  filter(found_publication == TRUE) %>% 
+  group_by(year) %>% 
+  summarise(
+    qty_publications = sum(found_publication, na.rm = T), .groups = 'drop'
+    ) %>% 
+  mutate(cumulative_pubs = cumsum(qty_publications)) 
+
+publication_count <- publication_data %>% pull(qty_publications) %>% sum()
+
+publication_data %>% 
+  plot_ly(x = ~year, y = ~cumulative_pubs, type = 'scatter', mode = 'lines+markers', name = 'Publications', fill = 'tozeroy', showlegend=FALSE) %>%
+    layout(xaxis = list(title = '', showgrid = FALSE),
+           annotations = list(x = 0.5, y = .95, text = glue::glue("<b>Publications (cumulative)</b>\nTotal: {publication_count}"), showarrow = FALSE, xref='x domain', yref='paper', xanchor='center', yanchor='bottom')
+           ) 
+```
+
 ## Repositories
+
+Software respositories associated with this project.
 
 ```{r}
 #| label: repos
@@ -192,7 +219,7 @@ git_info %>%
     extensions = 'Buttons', 
     options = list(
       dom = 'Bfrtip',
-      buttons = c('csv', 'excel'),
+      buttons = c('excel', 'csv'),
       scrollY = 500,
       scroller = TRUE
     ),
